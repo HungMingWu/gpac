@@ -2,7 +2,7 @@ include ../../config.mak
 
 vpath %.c $(SRC_PATH)/applications/dashcast
 
-CFLAGS= $(OPTFLAGS) -D_GNU_SOURCE -I"$(SRC_PATH)/include" -I../../ $(ffmpeg_cflags)
+CFLAGS= $(OPTFLAGS) -D_GNU_SOURCE -I"$(SRC_PATH)/include" -I../../ $(ffmpeg_cflags) -g -O0
 
 LINKLIBS=$(GPAC_SH_FLAGS)
 
@@ -25,8 +25,8 @@ CFLAGS+=-DGPAC_USE_LIBAV
 endif
 
 ifneq ($(CONFIG_LIBAVRESAMPLE),no)
-CFLAGS+=-DDC_AUDIO_RESAMPLER
-LINKLIBS+=-lavresample
+CFLAGS+=-std=gnu99 -DDC_AUDIO_RESAMPLER
+LINKLIBS+= -lavdevice -lavfilter -lavformat -lavcodec -lavutil -lavresample -lswscale -lswresample -lm -lz -lva -pthread -llzma -lx264 -lX11 -lXext -lxcb -lXv -lSDL -lasound -ljack -lxcb-xfixes -lpostproc -lxcb-shm -lxcb-shape
 endif
 
 
