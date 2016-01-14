@@ -262,6 +262,7 @@ int dc_video_decoder_read(VideoInputFile *video_input_file, VideoInputData *vide
 			video_data_node = (VideoDataNode *) dc_producer_produce(&video_input_data->producer, &video_input_data->circular_buf);
 			video_data_node->source_number = source_number;
 			/* Flush decoder */
+			av_free_packet(&packet);
 			memset(&packet, 0, sizeof(AVPacket));
 #ifndef FF_API_AVFRAME_LAVC
 			avcodec_get_frame_defaults(video_data_node->vframe);
@@ -282,6 +283,7 @@ int dc_video_decoder_read(VideoInputFile *video_input_file, VideoInputData *vide
 		else if (ret < 0)
 		{
 			GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("Cannot read video frame.\n"));
+			av_free_packet(&packet);
 			continue;
 		}
 
@@ -300,6 +302,7 @@ int dc_video_decoder_read(VideoInputFile *video_input_file, VideoInputData *vide
 			}
 			if (!already_locked) {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("[dashcast] Live system dropped a video frame\n"));
+				av_free_packet(&packet);
 				continue;
 			}
 
@@ -417,6 +420,9 @@ int dc_video_decoder_read(VideoInputFile *video_input_file, VideoInputData *vide
 
 void dc_video_decoder_close(VideoInputFile *video_input_file)
 {
+	/* Get a pointer to the codec context for the video stream */
+	AVCodecContext *codec_ctx = video_input_file->av_fmt_ctx->streams[video_input_file->vstream_idx]->codec;
+	avcodec_close(codec_ctx);
 	/* Close the video format context */
 	if (!video_input_file->av_fmt_ctx_ref_cnt)
 		avformat_close_input(&video_input_file->av_fmt_ctx);

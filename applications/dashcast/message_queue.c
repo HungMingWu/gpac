@@ -102,6 +102,7 @@ void dc_message_queue_flush(MessageQueue *mq)
 
 	for (mqn = mq->first_node; mqn != NULL; mqn = mqn1) {
 		mqn1 = mqn->next;
+		gf_free(mqn->data);
 		gf_free(mqn);
 	}
 	mq->last_node = NULL;

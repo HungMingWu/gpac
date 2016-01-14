@@ -248,7 +248,6 @@ int dc_audio_decoder_read(AudioInputFile *audio_input_file, AudioInputData *audi
 
 			/* Decode audio frame */
 			if (avcodec_decode_audio4(codec_ctx, audio_input_data->aframe, &got_frame, &packet) < 0) {
-				av_free_packet(&packet);
 				GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("Error while decoding audio.\n"));
 				dc_producer_end_signal(&audio_input_data->producer, &audio_input_data->circular_buf);
 				dc_producer_unlock_previous(&audio_input_data->producer, &audio_input_data->circular_buf);
@@ -374,16 +373,20 @@ int dc_audio_decoder_read(AudioInputFile *audio_input_file, AudioInputData *audi
 
 void dc_audio_decoder_close(AudioInputFile *audio_input_file)
 {
-	/*
-	 * Close the audio format context
-	 */
-	avformat_close_input(&audio_input_file->av_fmt_ctx);
+	AVCodecContext *codec_ctx = audio_input_file->av_fmt_ctx->streams[audio_input_file->astream_idx]->codec;
+	avcodec_close(codec_ctx);
+
+        /*
+         * Close the audio format context
+         */
+        avformat_close_input(&audio_input_file->av_fmt_ctx);
 
 	if (audio_input_file->av_pkt_list_mutex) {
 		gf_mx_p(audio_input_file->av_pkt_list_mutex);
 		while (gf_list_count(audio_input_file->av_pkt_list)) {
 			AVPacket *pkt = (AVPacket*)gf_list_last(audio_input_file->av_pkt_list);
 			av_free_packet(pkt);
+			gf_free(pkt);
 			gf_list_rem_last(audio_input_file->av_pkt_list);
 		}
 		gf_list_del(audio_input_file->av_pkt_list);

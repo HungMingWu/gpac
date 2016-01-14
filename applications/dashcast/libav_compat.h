@@ -47,9 +47,11 @@
 
 #if (LIBAVCODEC_VERSION_MAJOR<55) || ((LIBAVCODEC_VERSION_MAJOR==55) && (LIBAVCODEC_VERSION_MINOR<=40))
 #define FF_ALLOC_FRAME avcodec_alloc_frame
+#define FF_FREE_FRAME avcodec_free_frame
 #define LIBAV_FRAME_OLD
 #else
 #define FF_ALLOC_FRAME av_frame_alloc
+#define FF_FREE_FRAME av_frame_free
 #endif
 
 #endif

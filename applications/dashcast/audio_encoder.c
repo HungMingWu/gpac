@@ -298,6 +298,7 @@ int dc_audio_encoder_encode(AudioOutputFile *audio_output_file, AudioInputData *
 				audio_output_file->aframe->extended_data = data;
 			}
 #endif
+			av_free_packet(&audio_output_file->packet);
 			return -1;
 		}
 
@@ -314,6 +315,7 @@ int dc_audio_encoder_encode(AudioOutputFile *audio_output_file, AudioInputData *
 
 		if (got_pkt) {
 			//audio_output_file->acc_samples += audio_output_file->aframe->nb_samples;
+			av_free_packet(&audio_output_file->packet);
 			return 0;
 		}
 

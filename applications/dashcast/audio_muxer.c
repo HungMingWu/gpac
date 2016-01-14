@@ -45,20 +45,16 @@ int dc_gpac_audio_moov_create(AudioOutputFile *audio_output_file, char *filename
 		return -1;
 	}
 
-	esd = gf_odf_desc_esd_new(2);
+	esd = gf_odf_desc_esd_new(GF_ODF_SLC_TAG);
 	if (!esd) {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("Cannot create GF_ESD\n"));
 		return -1;
 	}
 
-	esd->decoderConfig = (GF_DecoderConfig *) gf_odf_desc_new(GF_ODF_DCD_TAG);
-	esd->slConfig = (GF_SLConfig *) gf_odf_desc_new(GF_ODF_SLC_TAG);
-	esd->decoderConfig->streamType = GF_STREAM_AUDIO;
 	if (!strcmp(audio_output_file->codec_ctx->codec->name, "aac")) { //TODO: find an automatic table
 		esd->decoderConfig->objectTypeIndication = GPAC_OTI_AUDIO_AAC_MPEG4;
 		esd->decoderConfig->bufferSizeDB = 20;
 		esd->slConfig->timestampResolution = audio_codec_ctx->sample_rate;
-		esd->decoderConfig->decoderSpecificInfo = (GF_DefaultDescriptor *) gf_odf_desc_new(GF_ODF_DSI_TAG);
 		esd->ESID = 1;
 
 #ifndef GPAC_DISABLE_AV_PARSERS
@@ -79,7 +75,6 @@ int dc_gpac_audio_moov_create(AudioOutputFile *audio_output_file, char *filename
 		esd->decoderConfig->objectTypeIndication = GPAC_OTI_AUDIO_MPEG1;
 		esd->decoderConfig->bufferSizeDB = 20;
 		esd->slConfig->timestampResolution = audio_codec_ctx->sample_rate;
-		esd->decoderConfig->decoderSpecificInfo = (GF_DefaultDescriptor *) gf_odf_desc_new(GF_ODF_DSI_TAG);
 		esd->ESID = 1;
 
 #ifndef GPAC_DISABLE_AV_PARSERS
@@ -100,12 +95,14 @@ int dc_gpac_audio_moov_create(AudioOutputFile *audio_output_file, char *filename
 	GF_LOG(GF_LOG_DEBUG, GF_LOG_DASH, ("TimeScale: %d \n", audio_codec_ctx->time_base.den));
 	if (!track) {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("Cannot create new track\n"));
+		gf_odf_desc_del((GF_Descriptor *) esd);
 		return -1;
 	}
 
 	ret = gf_isom_set_track_enabled(audio_output_file->isof, track, 1);
 	if (ret != GF_OK) {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("%s: gf_isom_set_track_enabled\n", gf_error_to_string(ret)));
+		gf_odf_desc_del((GF_Descriptor *) esd);
 		return -1;
 	}
 
@@ -114,6 +111,7 @@ int dc_gpac_audio_moov_create(AudioOutputFile *audio_output_file, char *filename
 	ret = gf_isom_new_mpeg4_description(audio_output_file->isof, track, esd, NULL, NULL, &di);
 	if (ret != GF_OK) {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("%s: gf_isom_new_mpeg4_description\n", gf_error_to_string(ret)));
+		gf_odf_desc_del((GF_Descriptor *) esd);
 		return -1;
 	}
 
@@ -372,6 +370,7 @@ int dc_audio_muxer_init(AudioOutputFile *audio_output_file, AudioDataConf *audio
 void dc_audio_muxer_free(AudioOutputFile *audio_output_file)
 {
 #ifndef GPAC_DISABLE_ISOM
+	gf_isom_sample_del(&audio_output_file->sample);
 	if (audio_output_file->isof != NULL) {
 		gf_isom_close(audio_output_file->isof);
 	}

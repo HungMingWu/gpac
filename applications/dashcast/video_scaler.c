@@ -26,10 +26,6 @@
 #include "video_scaler.h"
 
 
-#ifdef GPAC_USE_LIBAV
-#define av_frame_free	av_free
-#endif
-
 VideoScaledDataNode * dc_video_scaler_node_create(int width, int height, int crop_x, int crop_y, int pix_fmt)
 {
 	VideoScaledDataNode *video_scaled_data_node = (VideoScaledDataNode*)gf_malloc(sizeof(VideoDataNode));
@@ -43,8 +39,8 @@ VideoScaledDataNode * dc_video_scaler_node_create(int width, int height, int cro
 	}
 	if (!video_scaled_data_node || !video_scaled_data_node->v_frame || ((crop_x || crop_y) && !video_scaled_data_node->cropped_frame)) {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_DASH, ("Cannot allocate VideoNode!\n"));
-		av_frame_free(&video_scaled_data_node->v_frame);
-		av_frame_free(&video_scaled_data_node->cropped_frame);
+		FF_FREE_FRAME(&video_scaled_data_node->v_frame);
+		FF_FREE_FRAME(&video_scaled_data_node->cropped_frame);
 		gf_free(video_scaled_data_node);
 		return NULL;
 	}
@@ -60,9 +56,12 @@ VideoScaledDataNode * dc_video_scaler_node_create(int width, int height, int cro
 
 void dc_video_scaler_node_destroy(VideoScaledDataNode *video_scaled_data_node)
 {
-#ifndef GPAC_USE_LIBAV
-	av_frame_free(&video_scaled_data_node->v_frame);
-#endif
+	avpicture_free((AVPicture*)video_scaled_data_node->v_frame);
+	if (video_scaled_data_node->cropped_frame) {
+		avpicture_free((AVPicture*)video_scaled_data_node->cropped_frame);
+	}
+	FF_FREE_FRAME(&video_scaled_data_node->v_frame);
+	FF_FREE_FRAME(&video_scaled_data_node->cropped_frame);
 	gf_free(video_scaled_data_node);
 }
 
@@ -251,8 +250,9 @@ int dc_video_scaler_data_destroy(VideoScaledData *video_scaled_data)
 
 	for (i=0 ; i<video_scaled_data->num_producers; i++) {
 		if (video_scaled_data->vsprop[i].sws_ctx)
-			av_free(video_scaled_data->vsprop[i].sws_ctx);
+			sws_freeContext(video_scaled_data->vsprop[i].sws_ctx);
 	}
+
 	gf_free(video_scaled_data->vsprop);
 	//av_free(video_scaled_data->sws_ctx);
 

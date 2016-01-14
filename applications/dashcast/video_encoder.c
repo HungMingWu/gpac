@@ -228,6 +228,7 @@ int dc_video_encoder_encode(VideoOutputFile *video_output_file, VideoScaledData 
 				video_codec_ctx->coded_frame->key_frame = (pkt.flags & AV_PKT_FLAG_KEY) ? 1 : 0;
 			}
 		}
+		av_free_packet(&pkt);
 	}
 
 	dc_consumer_advance(&video_output_file->consumer);

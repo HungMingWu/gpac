@@ -79,6 +79,7 @@ int dc_audio_input_data_init(AudioInputData *audio_input_data, int channels, int
 void dc_audio_input_data_destroy(AudioInputData *audio_input_data)
 {
 	int i;
+	FF_FREE_FRAME(&audio_input_data->aframe);
 	if (audio_input_data->circular_buf.list) {
 		for (i = 0; i < AUDIO_CB_SIZE; i++) {
 			AudioDataNode *audio_data_node = (AudioDataNode*)audio_input_data->circular_buf.list[i].data;

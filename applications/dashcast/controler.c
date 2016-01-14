@@ -1558,18 +1558,11 @@ int dc_run_controler(CmdData *in_data)
 #endif
 
 exit:
-	if (strcmp(in_data->audio_data_conf.filename, "") != 0) {
-		/* Destroy audio input data */
-		dc_audio_input_data_destroy(&audio_input_data);
-		/* Close input audio */
-		dc_audio_decoder_close(&audio_input_file);
-	}
-
 	if (strcmp(in_data->video_data_conf.filename, "") != 0) {
 		/* Destroy video input data */
 		dc_video_input_data_destroy(&video_input_data);
 
-		for (i = 0; i < gf_list_count(in_data->vsrc); i++) {
+		for (i = 0; i < 1 + gf_list_count(in_data->vsrc); i++) {
 			/* Close input video */
 			dc_video_decoder_close(video_input_file[i]);
 		}
@@ -1581,6 +1574,13 @@ exit:
 		/* Destroy video scaled data */
 		dc_video_scaler_list_destroy(&video_scaled_data_list);
 	}
+
+        if (strcmp(in_data->audio_data_conf.filename, "") != 0) {
+                /* Destroy audio input data */
+                dc_audio_input_data_destroy(&audio_input_data);
+                /* Close input audio */
+                dc_audio_decoder_close(&audio_input_file);
+        }
 
 	if (vscaler_th_params)
 		gf_free(vscaler_th_params);
